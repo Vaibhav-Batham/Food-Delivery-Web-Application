@@ -1,24 +1,39 @@
- import express from "express"
- import connectDB from "./config/db.js";
- import cookieParser from "cookie-parser";
- import dotenv  from "dotenv"
- //import connectDb from "./config/db.js"
- import authRouter from "./routes/auth.route.js"
- import cors from "cors"
- dotenv.config()
- const app=express()
- const port=process.env.port|| 5000
- app.use(cors({
-   origin:"http://localhost:5173",
-   credentials:true
- }))
- app.use(express.json())
- app.use(cookieParser())
- app.use("/api/auth",authRouter)
+import express from "express";
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+import cors from "cors";
+import authRouter from "./routes/auth.route.js";
 
- app.listen(port,()=>{
-    connectDB();
-    console.log(`server started at ${port}`)
+dotenv.config();
+
+const app = express();
+const PORT = process.env.PORT || 8000;
+
+// Middleware
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true
+}));
+app.use(express.json());
+
+// Routes
+app.use("/api/auth", authRouter);
+
+// DB Connect
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log("MongoDB connected ✅");
+  } catch (error) {
+    console.error("❌ DB Connection Error:", error.message);
+  }
+};
+app.get("/", (req, res) => {
+  res.send("Backend OK");
+});
 
 
- })
+app.listen(PORT, () => {
+  connectDB();
+  console.log(`Server started at ${PORT}`);
+});
