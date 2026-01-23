@@ -2,9 +2,11 @@ import { Routes, Route, Link } from 'react-router-dom'
 import ForgotPassword from "./pages/forgotpassword";
 import SignUp from './pages/SignUp'
 import SignIn from './pages/SignIn'
+import useGetCurrentUser from './hooks/useGetCurrentUser';
 export const serverUrl = "http://localhost:8000"
 
 function App() {
+  useGetCurrentUser()
   return (
     <div className="p-6">
       <nav className="space-x-4 mb-6">

@@ -4,38 +4,70 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import axios from "axios";
 import { serverUrl } from "../App";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { auth } from "../firebase";
 
 function SignIn() {
+  const navigate = useNavigate();
+
   const primaryColor = "#ff4d2d";
   const bgColor = "#fff9f6";
   const borderColor = "#ddd";
 
+  // ================= STATE =================
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [err, setErr] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const navigate = useNavigate();
-
+  // ================= NORMAL SIGN IN =================
   const handleSignIn = async () => {
     if (!email || !password) {
-      alert("Email aur Password dono required hai");
+      setErr("Email and Password both are required");
       return;
     }
 
     try {
-      const res = await axios.post(
+      setLoading(true);
+      setErr("");
+
+      await axios.post(
         `${serverUrl}/api/auth/signin`,
         { email, password },
         { withCredentials: true }
       );
 
-      console.log("Signin Success 👉", res.data);
       navigate("/");
     } catch (error) {
-      console.log(
-        "Signin Error 👉",
-        error.response?.data || error.message
+      setErr(error.response?.data?.message || "Signin failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ================= GOOGLE SIGN IN =================
+  const handleGoogleAuth = async () => {
+    try {
+      setLoading(true);
+      setErr("");
+
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+
+      await axios.post(
+        `${serverUrl}/api/auth/google-auth`,
+        {
+          email: result.user.email,
+        },
+        { withCredentials: true }
       );
+
+      navigate("/");
+    } catch (error) {
+      setErr("Google authentication failed");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -51,7 +83,10 @@ function SignIn() {
         <h1 className="text-3xl font-bold mb-2" style={{ color: primaryColor }}>
           Tastico
         </h1>
-        <p className="text-gray-600 mb-8">Sign in to your account</p>
+        <p className="text-gray-600 mb-6">Sign in to your account</p>
+
+        {/* ERROR */}
+        {err && <p className="text-red-500 text-center mb-3">{err}</p>}
 
         {/* EMAIL */}
         <input
@@ -92,15 +127,21 @@ function SignIn() {
         {/* SIGN IN */}
         <button
           onClick={handleSignIn}
+          disabled={loading}
           className="w-full py-2 rounded-lg text-white font-semibold"
           style={{ backgroundColor: primaryColor }}
         >
-          Sign In
+          {loading ? "please wait..." : "Sign In"}
         </button>
 
         {/* GOOGLE */}
-        <button className="w-full mt-3 py-2 border rounded-lg flex items-center justify-center gap-2">
-          <FcGoogle size={20} /> Sign in with Google
+        <button
+          onClick={handleGoogleAuth}
+          disabled={loading}
+          className="w-full mt-3 py-2 border rounded-lg flex items-center justify-center gap-2"
+        >
+          <FcGoogle size={20} />
+          Sign in with Google
         </button>
 
         {/* SIGN UP */}

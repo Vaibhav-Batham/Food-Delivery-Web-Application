@@ -4,12 +4,15 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import axios from "axios";
 import { serverUrl } from "../App";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { auth } from "../firebase";
+import {} from "react-spinners"
 
 function SignUp() {
   const navigate = useNavigate();
-
   const primaryColor = "#ff4d2d";
 
+  // ================= STATE =================
   const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState("user");
 
@@ -17,31 +20,66 @@ function SignUp() {
   const [email, setEmail] = useState("");
   const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState("");
+  const [err, setErr] = useState("");
+  const [loading, setLoading] = useState(false);
 
+  // ================= NORMAL SIGNUP =================
   const handleSignUp = async () => {
-    // 🔴 FRONTEND VALIDATION (MOST IMPORTANT)
     if (!fullName || !email || !mobile || !password || !role) {
-      alert("All fields are required");
+      setErr("All fields are required");
       return;
     }
 
-    // Debug (agar kabhi doubt ho)
-    console.log({ fullName, email, mobile, password, role });
-
     try {
-      const res = await axios.post(
+      setLoading(true);
+      setErr("");
+
+      await axios.post(
         `${serverUrl}/api/auth/signup`,
         { fullName, email, password, mobile, role },
         { withCredentials: true }
       );
 
-      console.log("Signup Success 👉", res.data);
       alert("Signup successful");
       navigate("/signin");
-
     } catch (error) {
-      console.log("Signup Error 👉", error.response?.data || error.message);
-      alert(error.response?.data?.message || "Signup failed");
+      setErr(error.response?.data?.message || "Signup failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ================= GOOGLE SIGNUP =================
+  const handleGoogleAuth = async () => {
+    if (!mobile) {
+      setErr("Mobile number is required for Google signup");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setErr("");
+
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+
+      await axios.post(
+        `${serverUrl}/api/auth/google-auth`,
+        {
+          fullName: result.user.displayName,
+          email: result.user.email,
+          role,
+          mobile,
+        },
+        { withCredentials: true }
+      );
+
+      alert("Google signup successful");
+      navigate("/");
+    } catch (error) {
+      setErr("Google authentication failed");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -51,6 +89,9 @@ function SignUp() {
 
         <h1 className="text-3xl font-bold mb-2 text-[#ff4d2d]">Tastico</h1>
         <p className="text-gray-600 mb-6">Create your account</p>
+
+        {/* ERROR */}
+        {err && <p className="text-red-500 text-center mb-3">{err}</p>}
 
         {/* FULL NAME */}
         <input
@@ -119,14 +160,19 @@ function SignUp() {
         {/* SIGN UP */}
         <button
           onClick={handleSignUp}
+          disabled={loading}
           className="w-full py-2 rounded-lg text-white font-semibold"
           style={{ backgroundColor: primaryColor }}
         >
-          Sign Up
+          {loading ? "cliploader" : "Sign Up"}
         </button>
 
         {/* GOOGLE */}
-        <button className="w-full mt-3 py-2 border rounded-lg flex items-center justify-center gap-2">
+        <button
+          onClick={handleGoogleAuth}
+          disabled={loading}
+          className="w-full mt-3 py-2 border rounded-lg flex items-center justify-center gap-2"
+        >
           <FcGoogle size={20} />
           Sign up with Google
         </button>
