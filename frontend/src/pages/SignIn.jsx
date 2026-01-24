@@ -6,6 +6,9 @@ import axios from "axios";
 import { serverUrl } from "../App";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "../firebase";
+import { useDispatch } from "react-redux";
+import { setUserData } from "../redux/userSlice";
+
 
 function SignIn() {
   const navigate = useNavigate();
@@ -20,6 +23,9 @@ function SignIn() {
   const [password, setPassword] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
+  const dispatch=useDispatch()
+
+
 
   // ================= NORMAL SIGN IN =================
   const handleSignIn = async () => {
@@ -35,7 +41,8 @@ function SignIn() {
       await axios.post(
         `${serverUrl}/api/auth/signin`,
         { email, password },
-        { withCredentials: true }
+        { withCredentials: true },
+        dispatch(setUserData(result.data))
       );
 
       navigate("/");
@@ -60,7 +67,8 @@ function SignIn() {
         {
           email: result.user.email,
         },
-        { withCredentials: true }
+        { withCredentials: true },
+        dispatch(setUserData(data))
       );
 
       navigate("/");

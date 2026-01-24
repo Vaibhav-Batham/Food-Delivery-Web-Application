@@ -7,6 +7,9 @@ import { serverUrl } from "../App";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "../firebase";
 import {} from "react-spinners"
+import { setUserData } from "../redux/userSlice";
+import { useDispatch } from "react-redux";
+
 
 function SignUp() {
   const navigate = useNavigate();
@@ -22,6 +25,7 @@ function SignUp() {
   const [password, setPassword] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
+  const dispatch=useDispatch()
 
   // ================= NORMAL SIGNUP =================
   const handleSignUp = async () => {
@@ -37,7 +41,8 @@ function SignUp() {
       await axios.post(
         `${serverUrl}/api/auth/signup`,
         { fullName, email, password, mobile, role },
-        { withCredentials: true }
+        { withCredentials: true },
+        dispatch(setUserData(result.data))
       );
 
       alert("Signup successful");
@@ -71,7 +76,8 @@ function SignUp() {
           role,
           mobile,
         },
-        { withCredentials: true }
+        { withCredentials: true },
+        dispatch(setUserData(data))
       );
 
       alert("Google signup successful");
