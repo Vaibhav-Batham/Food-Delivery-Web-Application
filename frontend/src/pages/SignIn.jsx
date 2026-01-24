@@ -23,7 +23,7 @@ function SignIn() {
   const [password, setPassword] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
-  const dispatch=useDispatch()
+  const dispatch = useDispatch()
 
 
 
@@ -38,13 +38,13 @@ function SignIn() {
       setLoading(true);
       setErr("");
 
-      await axios.post(
+      const result = await axios.post(
         `${serverUrl}/api/auth/signin`,
         { email, password },
-        { withCredentials: true },
-        dispatch(setUserData(result.data))
+        { withCredentials: true }
       );
 
+      dispatch(setUserData(result.data));
       navigate("/");
     } catch (error) {
       setErr(error.response?.data?.message || "Signin failed");
@@ -62,17 +62,21 @@ function SignIn() {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
 
-      await axios.post(
+      const response = await axios.post(
         `${serverUrl}/api/auth/google-auth`,
         {
+          fullName: result.user.displayName,
           email: result.user.email,
+          mobile: "0000000000",
+          role: "user"
         },
-        { withCredentials: true },
-        dispatch(setUserData(data))
+        { withCredentials: true }
       );
 
+      dispatch(setUserData(response.data));
       navigate("/");
     } catch (error) {
+      console.error("Google signin error:", error);
       setErr("Google authentication failed");
     } finally {
       setLoading(false);

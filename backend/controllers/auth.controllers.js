@@ -2,6 +2,7 @@
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import { sendOtpMail } from "../utiles/mail.js";
+import gentoken from "../utiles/token.js";
 
 /* ================= SIGN UP ================= */
 export const signUp = async (req, res) => {
@@ -166,26 +167,35 @@ export const resetPassword = async (req, res) => {
 };
 
 
-export const googleAuth=async (req,res) => {
-  try{
-    const{fullName,email,mobile}=req.body
-    let user=await User.findOne({email})
-    if(!user){
-      User=await User.create({
-        fullName,email,mobile
-      })
+export const googleAuth = async (req, res) => {
+  try {
+    const { fullName, email, mobile, role } = req.body;
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      user = await User.create({
+        fullName,
+        email,
+        mobile,
+        role: role || "user"
+      });
     }
 
-    const token=await genToken(user._id)
-    res.cookie("token",token,{
-     secure:false,
-     sameSite:"strict",
-     maxAge:7*24*60*1000,
-     httpOnly:true
-    })
+    const token = await gentoken(user._id);
+    res.cookie("token", token, {
+      secure: false,
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 1000,
+      httpOnly: true
+    });
 
-    return res.status(200).json(user)
-  } catch(error)  {
-    return res.status(500).json(`googleAuth error ${error}`)
+    return res.status(200).json(user);
+  } catch (error) {
+    console.error("Google Auth Error:", error);
+    return res.status(500).json({
+      message: "Google authentication failed",
+      error: error.message
+    });
   }
 };

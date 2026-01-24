@@ -1,11 +1,12 @@
- const gentoken=async (userId) => {
+import jwt from "jsonwebtoken";
+
+const gentoken = async (userId) => {
     try {
-        const token=await jwt.sign({userId},Process.env.JWT_SECRET,{expiresIn:"7d"})
-        return token
-    } catch (error){
-        console.log(error)
+        const token = await jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
+        return token;
+    } catch (error) {
+        console.log(error);
     }
- }
+};
 
-
- export default gentoken;
+export default gentoken;
