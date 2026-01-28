@@ -1,52 +1,44 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { FcGoogle } from "react-icons/fc";
 import axios from "axios";
 import { serverUrl } from "../App";
+import { useDispatch } from "react-redux";
+import { setUserData } from "../redux/userSlice";
+
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "../firebase";
-import { } from "react-spinners"
-import { setUserData } from "../redux/userSlice";
-import { useDispatch } from "react-redux";
-
+import { FcGoogle } from "react-icons/fc";
 
 function SignUp() {
   const navigate = useNavigate();
-  const primaryColor = "#ff4d2d";
-
-  // ================= STATE =================
-  const [showPassword, setShowPassword] = useState(false);
-  const [role, setRole] = useState("user");
+  const dispatch = useDispatch();
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
-  const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState("");
+  const [mobile, setMobile] = useState("");
+  const [role] = useState("user");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
-  const dispatch = useDispatch()
 
-  // ================= NORMAL SIGNUP =================
+  // ================= NORMAL SIGN UP =================
   const handleSignUp = async () => {
-    if (!fullName || !email || !mobile || !password || !role) {
-      setErr("All fields are required");
-      return;
+    if (!fullName || !email || !password || !mobile) {
+      return setErr("All fields are required");
     }
 
     try {
       setLoading(true);
       setErr("");
 
-      const result = await axios.post(
+      const res = await axios.post(
         `${serverUrl}/api/auth/signup`,
         { fullName, email, password, mobile, role },
         { withCredentials: true }
       );
 
-      dispatch(setUserData(result.data));
-      alert("Signup successful");
-      navigate("/signin");
+      dispatch(setUserData(res.data.user));
+      navigate("/");
     } catch (error) {
       setErr(error.response?.data?.message || "Signup failed");
     } finally {
@@ -54,13 +46,8 @@ function SignUp() {
     }
   };
 
-  // ================= GOOGLE SIGNUP =================
-  const handleGoogleAuth = async () => {
-    if (!mobile) {
-      setErr("Mobile number is required for Google signup");
-      return;
-    }
-
+  // ================= GOOGLE SIGN UP =================
+  const handleGoogleSignUp = async () => {
     try {
       setLoading(true);
       setErr("");
@@ -68,22 +55,22 @@ function SignUp() {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
 
-      const response = await axios.post(
+      const res = await axios.post(
         `${serverUrl}/api/auth/google-auth`,
         {
           fullName: result.user.displayName,
           email: result.user.email,
-          role,
-          mobile,
+          mobile: "0000000000",
+          role: "user",
         },
         { withCredentials: true }
       );
 
-      dispatch(setUserData(response.data));
-      alert("Google signup successful");
+      dispatch(setUserData(res.data.user));
       navigate("/");
     } catch (error) {
-      setErr("Google authentication failed");
+      console.log(error);
+      setErr("Google signup failed");
     } finally {
       setLoading(false);
     }
@@ -91,91 +78,55 @@ function SignUp() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#fff9f6] p-4">
-      <div className="bg-white w-full max-w-md p-8 rounded-xl shadow-lg">
-
+      <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-8">
         <h1 className="text-3xl font-bold mb-2 text-[#ff4d2d]">Tastico</h1>
-        <p className="text-gray-600 mb-6">Create your account</p>
+        <p className="text-gray-600 mb-6">Create a new account</p>
 
-        {/* ERROR */}
-        {err && <p className="text-red-500 text-center mb-3">{err}</p>}
+        {err && <p className="text-red-500 mb-3 text-center">{err}</p>}
 
-        {/* FULL NAME */}
         <input
           type="text"
           placeholder="Full Name"
-          className="w-full mb-3 px-3 py-2 border rounded-lg"
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
+          className="w-full mb-3 px-3 py-2 border rounded-lg"
         />
 
-        {/* EMAIL */}
         <input
           type="email"
           placeholder="Email"
-          className="w-full mb-3 px-3 py-2 border rounded-lg"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          className="w-full mb-3 px-3 py-2 border rounded-lg"
         />
 
-        {/* MOBILE */}
         <input
-          type="tel"
-          placeholder="Mobile"
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
           className="w-full mb-3 px-3 py-2 border rounded-lg"
+        />
+
+        <input
+          type="text"
+          placeholder="Mobile Number"
           value={mobile}
           onChange={(e) => setMobile(e.target.value)}
+          className="w-full mb-4 px-3 py-2 border rounded-lg"
         />
 
-        {/* PASSWORD */}
-        <div className="relative mb-4">
-          <input
-            type={showPassword ? "text" : "password"}
-            placeholder="Password"
-            className="w-full px-3 py-2 border rounded-lg"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <button
-            type="button"
-            className="absolute right-3 top-3"
-            onClick={() => setShowPassword(!showPassword)}
-          >
-            {showPassword ? <FaEyeSlash /> : <FaEye />}
-          </button>
-        </div>
-
-        {/* ROLE */}
-        <div className="flex gap-2 mb-4">
-          {["user", "owner", "deliveryBoy"].map((r) => (
-            <button
-              key={r}
-              type="button"
-              onClick={() => setRole(r)}
-              className="flex-1 py-2 rounded-lg border"
-              style={
-                role === r
-                  ? { backgroundColor: primaryColor, color: "white" }
-                  : { borderColor: primaryColor, color: primaryColor }
-              }
-            >
-              {r}
-            </button>
-          ))}
-        </div>
-
-        {/* SIGN UP */}
         <button
           onClick={handleSignUp}
           disabled={loading}
-          className="w-full py-2 rounded-lg text-white font-semibold"
-          style={{ backgroundColor: primaryColor }}
+          className="w-full py-2 rounded-lg text-white font-semibold bg-[#ff4d2d]"
         >
-          {loading ? "cliploader" : "Sign Up"}
+          {loading ? "Please wait..." : "Sign Up"}
         </button>
 
-        {/* GOOGLE */}
+        {/* GOOGLE SIGN UP */}
         <button
-          onClick={handleGoogleAuth}
+          onClick={handleGoogleSignUp}
           disabled={loading}
           className="w-full mt-3 py-2 border rounded-lg flex items-center justify-center gap-2"
         >
@@ -183,14 +134,15 @@ function SignUp() {
           Sign up with Google
         </button>
 
-        <p
-          className="text-center mt-5 cursor-pointer"
-          onClick={() => navigate("/signin")}
-        >
+        <p className="text-center mt-5">
           Already have an account?{" "}
-          <span className="text-[#ff4d2d]">Sign In</span>
+          <span
+            className="cursor-pointer text-[#ff4d2d]"
+            onClick={() => navigate("/signin")}
+          >
+            Sign In
+          </span>
         </p>
-
       </div>
     </div>
   );

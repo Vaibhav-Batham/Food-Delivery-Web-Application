@@ -1,50 +1,42 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { FcGoogle } from "react-icons/fc";
 import axios from "axios";
 import { serverUrl } from "../App";
-import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { auth } from "../firebase";
 import { useDispatch } from "react-redux";
 import { setUserData } from "../redux/userSlice";
 
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { auth } from "../firebase";
+import { FcGoogle } from "react-icons/fc";
 
 function SignIn() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  const primaryColor = "#ff4d2d";
-  const bgColor = "#fff9f6";
-  const borderColor = "#ddd";
-
-  // ================= STATE =================
-  const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState("");
+  const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
-  const dispatch = useDispatch()
-
-
+  const [showForgot, setShowForgot] = useState(false);
 
   // ================= NORMAL SIGN IN =================
   const handleSignIn = async () => {
     if (!email || !password) {
-      setErr("Email and Password both are required");
-      return;
+      return setErr("Email and password are required");
     }
 
     try {
       setLoading(true);
       setErr("");
 
-      const result = await axios.post(
+      const res = await axios.post(
         `${serverUrl}/api/auth/signin`,
         { email, password },
         { withCredentials: true }
       );
 
-      dispatch(setUserData(result.data));
+      dispatch(setUserData(res.data.user));
       navigate("/");
     } catch (error) {
       setErr(error.response?.data?.message || "Signin failed");
@@ -53,8 +45,30 @@ function SignIn() {
     }
   };
 
+  // ================= FORGOT PASSWORD =================
+  const handleForgotPassword = async () => {
+    if (!email) return setErr("Enter your email first");
+
+    try {
+      setLoading(true);
+      setErr("");
+      setMsg("");
+
+      const res = await axios.post(
+        `${serverUrl}/api/auth/forgot-password`,
+        { email }
+      );
+
+      setMsg(res.data.message || "Password reset link sent to email");
+    } catch (error) {
+      setErr(error.response?.data?.message || "Failed to send reset link");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // ================= GOOGLE SIGN IN =================
-  const handleGoogleAuth = async () => {
+  const handleGoogleSignIn = async () => {
     try {
       setLoading(true);
       setErr("");
@@ -62,110 +76,103 @@ function SignIn() {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
 
-      const response = await axios.post(
+      const res = await axios.post(
         `${serverUrl}/api/auth/google-auth`,
-        {
-          fullName: result.user.displayName,
-          email: result.user.email,
-          mobile: "0000000000",
-          role: "user"
-        },
+        { email: result.user.email },
         { withCredentials: true }
       );
 
-      dispatch(setUserData(response.data));
+      dispatch(setUserData(res.data.user));
       navigate("/");
     } catch (error) {
-      console.error("Google signin error:", error);
-      setErr("Google authentication failed");
+      console.log(error);
+      setErr("Google signin failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div
-      className="min-h-screen w-full flex items-center justify-center p-4"
-      style={{ backgroundColor: bgColor }}
-    >
-      <div
-        className="bg-white rounded-xl shadow-lg w-full max-w-md p-8 border"
-        style={{ borderColor }}
-      >
-        <h1 className="text-3xl font-bold mb-2" style={{ color: primaryColor }}>
-          Tastico
-        </h1>
-        <p className="text-gray-600 mb-6">Sign in to your account</p>
+    <div className="min-h-screen flex items-center justify-center bg-[#fff9f6] p-4">
+      <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-8">
+        <h1 className="text-3xl font-bold mb-2 text-[#ff4d2d]">Tastico</h1>
+        <p className="text-gray-600 mb-6">
+          {showForgot ? "Reset your password" : "Sign in to your account"}
+        </p>
 
-        {/* ERROR */}
-        {err && <p className="text-red-500 text-center mb-3">{err}</p>}
+        {err && <p className="text-red-500 mb-3 text-center">{err}</p>}
+        {msg && <p className="text-green-600 mb-3 text-center">{msg}</p>}
 
-        {/* EMAIL */}
         <input
           type="email"
           placeholder="Email"
-          className="w-full mb-4 px-3 py-2 border rounded-lg"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          className="w-full mb-3 px-3 py-2 border rounded-lg"
         />
 
-        {/* PASSWORD */}
-        <div className="relative mb-2">
+        {!showForgot && (
           <input
-            type={showPassword ? "text" : "password"}
+            type="password"
             placeholder="Password"
-            className="w-full px-3 py-2 border rounded-lg"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            className="w-full mb-2 px-3 py-2 border rounded-lg"
           />
+        )}
+
+        {!showForgot && (
+          <div
+            className="text-right text-sm text-[#ff4d2d] cursor-pointer mb-4"
+            onClick={() => setShowForgot(true)}
+          >
+            Forgot password?
+          </div>
+        )}
+
+        <button
+          onClick={showForgot ? handleForgotPassword : handleSignIn}
+          disabled={loading}
+          className="w-full py-2 rounded-lg text-white font-semibold bg-[#ff4d2d]"
+        >
+          {loading
+            ? "Please wait..."
+            : showForgot
+            ? "Send Reset Link"
+            : "Sign In"}
+        </button>
+
+        {/* GOOGLE SIGN IN — NICHE */}
+        {!showForgot && (
           <button
-            type="button"
-            className="absolute right-3 top-3 text-gray-500"
-            onClick={() => setShowPassword(!showPassword)}
+            onClick={handleGoogleSignIn}
+            disabled={loading}
+            className="w-full mt-3 py-2 border rounded-lg flex items-center justify-center gap-2"
           >
-            {showPassword ? <FaEyeSlash /> : <FaEye />}
+            <FcGoogle size={20} />
+            Sign in with Google
           </button>
-        </div>
+        )}
 
-        {/* FORGOT PASSWORD */}
-        <p
-          className="text-right text-sm cursor-pointer mb-5"
-          style={{ color: primaryColor }}
-          onClick={() => navigate("/forgot-password")}
-        >
-          Forgot Password?
-        </p>
-
-        {/* SIGN IN */}
-        <button
-          onClick={handleSignIn}
-          disabled={loading}
-          className="w-full py-2 rounded-lg text-white font-semibold"
-          style={{ backgroundColor: primaryColor }}
-        >
-          {loading ? "please wait..." : "Sign In"}
-        </button>
-
-        {/* GOOGLE */}
-        <button
-          onClick={handleGoogleAuth}
-          disabled={loading}
-          className="w-full mt-3 py-2 border rounded-lg flex items-center justify-center gap-2"
-        >
-          <FcGoogle size={20} />
-          Sign in with Google
-        </button>
-
-        {/* SIGN UP */}
         <p className="text-center mt-5">
-          Don’t have an account?{" "}
-          <span
-            className="cursor-pointer"
-            style={{ color: primaryColor }}
-            onClick={() => navigate("/signup")}
-          >
-            Sign Up
-          </span>
+          {!showForgot ? (
+            <>
+              Don&apos;t have an account?{" "}
+              <span
+                className="cursor-pointer text-[#ff4d2d]"
+                onClick={() => navigate("/signup")}
+              >
+                Sign Up
+              </span>
+            </>
+          ) : (
+            <span
+              className="cursor-pointer text-[#ff4d2d]"
+              onClick={() => setShowForgot(false)}
+            >
+              Back to Sign In
+            </span>
+          )}
         </p>
       </div>
     </div>

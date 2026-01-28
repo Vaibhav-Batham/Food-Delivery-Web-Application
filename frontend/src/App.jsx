@@ -1,29 +1,47 @@
-import { Routes, Route, Link } from 'react-router-dom'
+export const serverUrl = "http://localhost:8000";
+
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+
+import Nav from "./components/Nav";
+import Home from "./pages/Home";
+import SignUp from "./pages/SignUp";
+import SignIn from "./pages/SignIn";
 import ForgotPassword from "./pages/forgotpassword";
-import SignUp from './pages/SignUp'
-import SignIn from './pages/SignIn'
-import useGetCurrentUser from './hooks/useGetCurrentUser';
-export const serverUrl = "http://localhost:8000"
+
+import useGetCurrentUser from "./hooks/useGetCurrentUser";
+import UseGetCity from "./hooks/useGetCity";
 
 function App() {
-  useGetCurrentUser()
+  useGetCurrentUser();
+  UseGetCity();
+
+  const { userData } = useSelector((state) => state.user);
+
   return (
-    <div className="p-6">
-      <nav className="space-x-4 mb-6">
-        <Link to="/signup">Signup</Link>
-        <Link to="/signin">Signin</Link>
-      </nav>
+    <>
+      {userData && <Nav />}
 
       <Routes>
-        <Route path="/" element={<SignUp />} />  
-        <Route path="/signup" element={<SignUp />} />
-        <Route path="/signin" element={<SignIn />} />
-       <Route path="/forgot-password" element={<ForgotPassword />} />       
-
+        <Route
+          path="/"
+          element={userData ? <Home /> : <Navigate to="/signup" />}
+        />
+        <Route
+          path="/signup"
+          element={!userData ? <SignUp /> : <Navigate to="/" />}
+        />
+        <Route
+          path="/signin"
+          element={!userData ? <SignIn /> : <Navigate to="/" />}
+        />
+        <Route
+          path="/forgot-password"
+          element={!userData ? <ForgotPassword /> : <Navigate to="/" />}
+        />
       </Routes>
-
-    </div>
-  )
+    </>
+  );
 }
 
-export default App
+export default App;
