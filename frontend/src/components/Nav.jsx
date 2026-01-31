@@ -2,14 +2,27 @@ import React, { useState, useEffect } from "react";
 import { FaLocationDot } from "react-icons/fa6";
 import { FaSearch, FaTimes } from "react-icons/fa";
 import { FiShoppingCart } from "react-icons/fi";
-import { useSelector } from "react-redux";
-
+import { useDispatch, useSelector } from "react-redux";
+import { setCity, setUserData } from "../redux/userSlice";
+import axios from "axios";
+import { serverUrl } from "../App";
 function Nav() {
   const { userData, city } = useSelector((state) => state.user);
+  const dispatch = useDispatch();
   const [showProfile, setShowProfile] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [status, setStatus] = useState("fetching"); // fetching / detecting / done / failed
   const userInitial = userData?.fullName?.[0] || "";
+  const handleLogOut = async () => {
+  try {
+    await axios.post(`${serverUrl}/api/auth/signout`, {}, { withCredentials: true });
+    dispatch(setUserData(null));
+    navigate("/login"); 
+  } catch (error) {
+    console.error("Logout failed:", error);
+  }
+};
+
 
   // Fetch city from browser location
   useEffect(() => {
@@ -27,15 +40,23 @@ function Nav() {
           const apiKey = import.meta.env.VITE_GEOAPIKEY;
 
           try {
-            const res = await fetch(
-              `https://api.geoapify.com/v1/geocode/reverse?lat=${latitude}&lon=${longitude}&format=json&apiKey=${apiKey}`
-            );
+            const url = `https://api.geoapify.com/v1/geocode/reverse?lat=${latitude}&lon=${longitude}&format=json&apiKey=${apiKey}`;
+            const res = await fetch(url);
+            console.log("DEBUG: Response Status:", res.status);
+
             const data = await res.json();
-            const p = data?.features?.[0]?.properties;
+
+            const p = data?.results?.[0];
             const cityName = p?.city || p?.town || p?.village || p?.suburb || p?.county || p?.state;
-            if (cityName) setStatus("done");
-            else setStatus("failed");
+
+            if (cityName) {
+              setStatus("done");
+              dispatch(setCity(cityName));
+            } else {
+              setStatus("failed");
+            }
           } catch (err) {
+            console.error("DEBUG: Fetch error:", err);
             setStatus("failed");
           }
         },
@@ -98,7 +119,7 @@ function Nav() {
               <div className="absolute right-0 top-12 w-44 bg-white shadow-lg rounded-lg p-3 z-50">
                 <p className="text-sm font-semibold text-gray-700 mb-2">{userData?.fullName}</p>
                 <button className="w-full text-left text-sm py-1 hover:text-[#ff4d2d]">My Orders</button>
-                <button className="w-full text-left text-sm py-1 text-red-500">Logout</button>
+                <button className="w-full text-left text-sm py-1 text-red-500" onClick={handleLogOut}>Logout</button>
               </div>
             )}
           </div>

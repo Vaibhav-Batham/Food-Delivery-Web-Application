@@ -8,6 +8,7 @@ import { setUserData } from "../redux/userSlice";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "../firebase";
 import { FcGoogle } from "react-icons/fc";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 function SignUp() {
   const navigate = useNavigate();
@@ -17,11 +18,11 @@ function SignUp() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mobile, setMobile] = useState("");
-  const [role] = useState("user");
+  const [role, setRole] = useState("user");
+  const [showPassword, setShowPassword] = useState(false);
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ================= NORMAL SIGN UP =================
   const handleSignUp = async () => {
     if (!fullName || !email || !password || !mobile) {
       return setErr("All fields are required");
@@ -46,7 +47,6 @@ function SignUp() {
     }
   };
 
-  // ================= GOOGLE SIGN UP =================
   const handleGoogleSignUp = async () => {
     try {
       setLoading(true);
@@ -61,7 +61,7 @@ function SignUp() {
           fullName: result.user.displayName,
           email: result.user.email,
           mobile: "0000000000",
-          role: "user",
+          role,
         },
         { withCredentials: true }
       );
@@ -69,7 +69,6 @@ function SignUp() {
       dispatch(setUserData(res.data.user));
       navigate("/");
     } catch (error) {
-      console.log(error);
       setErr("Google signup failed");
     } finally {
       setLoading(false);
@@ -100,13 +99,22 @@ function SignUp() {
           className="w-full mb-3 px-3 py-2 border rounded-lg"
         />
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full mb-3 px-3 py-2 border rounded-lg"
-        />
+        {/* PASSWORD */}
+        <div className="relative mb-3">
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full px-3 py-2 border rounded-lg pr-10"
+          />
+          <span
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-600"
+          >
+            {showPassword ? <FaEyeSlash /> : <FaEye />}
+          </span>
+        </div>
 
         <input
           type="text"
@@ -116,6 +124,28 @@ function SignUp() {
           className="w-full mb-4 px-3 py-2 border rounded-lg"
         />
 
+        {/* ROLES – IMAGE STYLE */}
+        <div className="flex gap-3 mb-4">
+          {[
+            { label: "User", value: "user" },
+            { label: "Owner", value: "owner" },
+            { label: "Delivery Boy", value: "deliveryboy" },
+          ].map((item) => (
+            <div
+              key={item.value}
+              onClick={() => setRole(item.value)}
+              className={`flex-1 text-center py-2 rounded-lg border cursor-pointer font-medium
+                ${
+                  role === item.value
+                    ? "bg-[#ff4d2d] text-white border-[#ff4d2d]"
+                    : "bg-white text-gray-600"
+                }`}
+            >
+              {item.label}
+            </div>
+          ))}
+        </div>
+
         <button
           onClick={handleSignUp}
           disabled={loading}
@@ -124,7 +154,6 @@ function SignUp() {
           {loading ? "Please wait..." : "Sign Up"}
         </button>
 
-        {/* GOOGLE SIGN UP */}
         <button
           onClick={handleGoogleSignUp}
           disabled={loading}
