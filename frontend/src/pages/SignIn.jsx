@@ -37,7 +37,15 @@ function SignIn() {
       );
 
       dispatch(setUserData(res.data.user));
-      navigate("/");
+
+      const role = res.data.user.role;
+      if (role === "user") {
+        navigate("/user/dashboard");
+      } else if (role === "owner") {
+        navigate("/owner/dashboard");
+      } else if (role === "deliveryboy") {
+        navigate("/delivery/dashboard");
+      }
     } catch (error) {
       setErr(error.response?.data?.message || "Signin failed");
     } finally {
@@ -83,7 +91,15 @@ function SignIn() {
       );
 
       dispatch(setUserData(res.data.user));
-      navigate("/");
+
+      const role = res.data.user.role;
+      if (role === "user") {
+        navigate("/user/dashboard");
+      } else if (role === "owner") {
+        navigate("/owner/dashboard");
+      } else if (role === "deliveryboy") {
+        navigate("/delivery/dashboard");
+      }
     } catch (error) {
       console.log(error);
       setErr("Google signin failed");
@@ -142,7 +158,6 @@ function SignIn() {
             : "Sign In"}
         </button>
 
-        {/* GOOGLE SIGN IN — NICHE */}
         {!showForgot && (
           <button
             onClick={handleGoogleSignIn}

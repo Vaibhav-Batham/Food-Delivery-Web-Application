@@ -3,25 +3,27 @@ import { FaLocationDot } from "react-icons/fa6";
 import { FaSearch, FaTimes } from "react-icons/fa";
 import { FiShoppingCart } from "react-icons/fi";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { setCity, setUserData } from "../redux/userSlice";
 import axios from "axios";
 import { serverUrl } from "../App";
 function Nav() {
   const { userData, city } = useSelector((state) => state.user);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [showProfile, setShowProfile] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [status, setStatus] = useState("fetching"); // fetching / detecting / done / failed
   const userInitial = userData?.fullName?.[0] || "";
   const handleLogOut = async () => {
-  try {
-    await axios.post(`${serverUrl}/api/auth/signout`, {}, { withCredentials: true });
-    dispatch(setUserData(null));
-    navigate("/login"); 
-  } catch (error) {
-    console.error("Logout failed:", error);
-  }
-};
+    try {
+      await axios.post(`${serverUrl}/api/auth/signout`, {}, { withCredentials: true });
+      dispatch(setUserData(null));
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
 
   // Fetch city from browser location
@@ -45,7 +47,6 @@ function Nav() {
             console.log("DEBUG: Response Status:", res.status);
 
             const data = await res.json();
-
             const p = data?.results?.[0];
             const cityName = p?.city || p?.town || p?.village || p?.suburb || p?.county || p?.state;
 

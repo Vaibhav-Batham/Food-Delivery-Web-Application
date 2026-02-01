@@ -39,7 +39,15 @@ function SignUp() {
       );
 
       dispatch(setUserData(res.data.user));
-      navigate("/");
+
+      const userRole = res.data.user.role;
+      if (userRole === "user") {
+        navigate("/user/dashboard");
+      } else if (userRole === "owner") {
+        navigate("/owner/dashboard");
+      } else if (userRole === "deliveryboy") {
+        navigate("/delivery/dashboard");
+      }
     } catch (error) {
       setErr(error.response?.data?.message || "Signup failed");
     } finally {
@@ -67,7 +75,15 @@ function SignUp() {
       );
 
       dispatch(setUserData(res.data.user));
-      navigate("/");
+
+      const userRole = res.data.user.role;
+      if (userRole === "user") {
+        navigate("/user/dashboard");
+      } else if (userRole === "owner") {
+        navigate("/owner/dashboard");
+      } else if (userRole === "deliveryboy") {
+        navigate("/delivery/dashboard");
+      }
     } catch (error) {
       setErr("Google signup failed");
     } finally {
@@ -124,7 +140,7 @@ function SignUp() {
           className="w-full mb-4 px-3 py-2 border rounded-lg"
         />
 
-        {/* ROLES – IMAGE STYLE */}
+        {/* ROLES */}
         <div className="flex gap-3 mb-4">
           {[
             { label: "User", value: "user" },
