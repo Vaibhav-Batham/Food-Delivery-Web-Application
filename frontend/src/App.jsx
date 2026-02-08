@@ -4,7 +4,6 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 
 import Nav from "./components/Nav";
-import Home from "./pages/Home";
 import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
 import ForgotPassword from "./pages/forgotpassword";
@@ -13,12 +12,17 @@ import UserDashboard from "./components/UserDashboard";
 import OwnerDashboard from "./components/OwnerDashboard";
 import DeliveryBoy from "./components/DeliveryBoy";
 
+import CreateEditShop from "./pages/CreateEditShop";
+import AddMenu from "./pages/AddMenu";
+
 import useGetCurrentUser from "./hooks/useGetCurrentUser";
 import UseGetCity from "./hooks/useGetCity";
+import useGetMyShop from "./hooks/useGetMyShope";
 
 function App() {
   useGetCurrentUser();
   UseGetCity();
+  useGetMyShop();
 
   const { userData } = useSelector((state) => state.user);
 
@@ -27,7 +31,7 @@ function App() {
       {userData && <Nav />}
 
       <Routes>
-        {/* ROOT — role based redirect */}
+        {/* ROOT */}
         <Route
           path="/"
           element={
@@ -45,7 +49,7 @@ function App() {
           }
         />
 
-        {/* AUTH ROUTES */}
+        {/* AUTH */}
         <Route
           path="/signup"
           element={!userData ? <SignUp /> : <Navigate to="/" />}
@@ -59,19 +63,23 @@ function App() {
           element={!userData ? <ForgotPassword /> : <Navigate to="/" />}
         />
 
-        {/* DASHBOARDS */}
+        {/* USER */}
         <Route
           path="/user/dashboard"
           element={
             userData?.role === "user" ? <UserDashboard /> : <Navigate to="/" />
           }
         />
+
+        {/* OWNER */}
         <Route
           path="/owner/dashboard"
           element={
             userData?.role === "owner" ? <OwnerDashboard /> : <Navigate to="/" />
           }
         />
+
+        {/* DELIVERY */}
         <Route
           path="/delivery/dashboard"
           element={
@@ -80,6 +88,45 @@ function App() {
             ) : (
               <Navigate to="/" />
             )
+          }
+        />
+
+        {/* OWNER — CREATE / EDIT SHOP */}
+        <Route
+          path="/owner/shop"
+          element={
+            userData?.role === "owner" ? (
+              <CreateEditShop />
+            ) : (
+              <Navigate to="/" />
+            )
+          }
+        />
+
+        <Route
+          path="/owner/shop/:id"
+          element={
+            userData?.role === "owner" ? (
+              <CreateEditShop />
+            ) : (
+              <Navigate to="/" />
+            )
+          }
+        />
+
+        {/*  OWNER — ADD MENU (WITHOUT shopId) */}
+        <Route
+          path="/owner/menu"
+          element={
+            userData?.role === "owner" ? <AddMenu /> : <Navigate to="/" />
+          }
+        />
+
+        {/* OWNER — ADD MENU (WITH shopId) */}
+        <Route
+          path="/owner/menu/:shopId"
+          element={
+            userData?.role === "owner" ? <AddMenu /> : <Navigate to="/" />
           }
         />
       </Routes>
