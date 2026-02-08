@@ -1,6 +1,7 @@
 import express from "express";
 import isAuth from "../middleware/isAuth.js";
-import { addItem } from "../controllers/item.controllers.js";
+import { upload } from "../middleware/multer.js"; // Fixed: Corrected to named import
+import { addItem, editItem } from "../controllers/item.controllers.js"; // Fixed: Imported editItem controller
 
 const router = express.Router();
 
